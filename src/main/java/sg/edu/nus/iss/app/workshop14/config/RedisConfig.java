@@ -20,11 +20,18 @@ public class RedisConfig {
 
     // value redis host from appln.properties
     @Value("${spring.redis.host}")
-    private String redistHost;
+    private String redisHost;
 
     // value redis port from appln.properties
     @Value("${spring.redis.port}")
-    private Optional<Integer> redistPort;
+    private Optional<Integer> redisPort;
+
+    @Value("${spring.redis.username}")
+    private String redisUsername;
+
+    @Value("${spring.redis.password}")
+    private String redisPassword;
+
 
     // define the return redis template bean as single Object
     // throughout the runtime.
@@ -35,8 +42,16 @@ public class RedisConfig {
         final RedisStandaloneConfiguration config 
                 = new RedisStandaloneConfiguration();
 
-        config.setHostName(redistHost);
-        config.setPort(redistPort.get());
+        config.setHostName(redisHost);
+        config.setPort(redisPort.get());
+        System.out.println(redisUsername);
+        System.out.println(redisPassword);
+        
+        if(!redisUsername.isEmpty() && !redisPassword.isEmpty()){
+            config.setUsername(redisUsername);
+            config.setPassword(redisPassword);
+        }
+        config.setDatabase(0);
 
         final JedisClientConfiguration jedisClient = JedisClientConfiguration
                                         .builder()
@@ -51,12 +66,13 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         // set the map key/value serialization type to String
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
-        redisTemplate.setHashValueSerializer(new StringRedisSerializer());
         // enable redis to store java object on the value column
-        RedisSerializer<Object> serializer 
+        RedisSerializer<Object> objSerializer 
                 = new JdkSerializationRedisSerializer(getClass().getClassLoader());
 
-        redisTemplate.setValueSerializer(serializer);
+        redisTemplate.setValueSerializer(objSerializer);
+        redisTemplate.setHashValueSerializer(objSerializer);
+        
         return redisTemplate;
     }
 }
